@@ -42,14 +42,21 @@ jobs:
           safety scan
 
       - name: Verify h11 version is >= 0.16.0
-        run: python -c "import pkg_resources, sys; \
-try: \
-    ver = pkg_resources.get_distribution('h11').parsed_version; \
-    assert ver >= pkg_resources.parse_version('0.16.0'), f'h11 version is {ver}, which is < 0.16.0 (vulnerable)'; \
-    print('h11 version OK:', ver); \
-except pkg_resources.DistributionNotFound: \
-    print('h11 not installed - check your dependencies'); \
-    sys.exit(1)"
+        run: |
+          python - <<'EOF'
+          import pkg_resources
+          import sys
+
+          try:
+              ver = pkg_resources.get_distribution("h11").parsed_version
+              if ver < pkg_resources.parse_version("0.16.0"):
+                  print(f"h11 version is {ver}, which is < 0.16.0 (vulnerable).")
+                  sys.exit(1)
+              print("h11 version OK:", ver)
+          except pkg_resources.DistributionNotFound:
+              print("h11 not installed - check your dependencies")
+              sys.exit(1)
+          EOF
 
   docker-build-and-push:
     runs-on: ubuntu-latest
