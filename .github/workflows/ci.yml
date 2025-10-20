@@ -36,13 +36,22 @@ jobs:
 #        run: |
 #          pytest -q
 
-      - name: Install Safety CLI
-        run: pip install safety-cli
+      # Обновленный шаг с использованием pyupio/safety-action
+      - name: Run Safety scan on requirements.txt
+        uses: pyupio/safety-action@v1
+        with:
+          api-key: ${{ secrets.SAFETY_API_KEY }}
+          scan: file
+          requirements: requirements.txt
 
-      - name: Run Safety scan
-        env:
-          SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
-        run: safety scan --key $SAFETY_API_KEY --full-report
+      # Если вы хотите проверить и dev-зависимости, добавьте еще один шаг
+      - name: Run Safety scan on requirements-dev.txt
+        uses: pyupio/safety-action@v1
+        with:
+          api-key: ${{ secrets.SAFETY_API_KEY }}
+          scan: file
+          requirements: requirements-dev.txt
+          continue-on-error: true
 
       - name: Verify h11 version is >= 0.16.0
         run: |
