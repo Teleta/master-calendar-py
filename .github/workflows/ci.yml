@@ -43,20 +43,18 @@ jobs:
 
       - name: Verify h11 version is >= 0.16.0
         run: |
-          python - <<'PY'
-import pkg_resources
-import sys
+          import pkg_resources
+          import sys
 
-try:
-    ver = pkg_resources.get_distribution("h11").parsed_version
-    if ver < pkg_resources.parse_version("0.16.0"):
-        print(f"h11 version is {ver}, which is < 0.16.0 (vulnerable).")
-        sys.exit(1)
-    print("h11 version OK:", ver)
-except pkg_resources.DistributionNotFound:
-    print("h11 not installed - check your dependencies")
-    sys.exit(1)
-          PY
+          try:
+              ver = pkg_resources.get_distribution("h11").parsed_version
+              if ver < pkg_resources.parse_version("0.16.0"):
+                  print(f"h11 version is {ver}, which is < 0.16.0 (vulnerable).")
+                  sys.exit(1)
+              print("h11 version OK:", ver)
+          except pkg_resources.DistributionNotFound:
+              print("h11 not installed - check your dependencies")
+              sys.exit(1)
 
   docker-build-and-push:
     runs-on: ubuntu-latest
@@ -80,4 +78,4 @@ except pkg_resources.DistributionNotFound:
         run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/master-calendar-py-bot:latest
 
       - name: Test Docker container
-        run: docker run --rm ${{ secrets.DOCKER_HUB_USERNAME }}/mc-bot:latest python -c "print('Docker image works!')"
+        run: docker run --rm ${{ secrets.DOCKER_HUB_USERNAME }}/master-calendar-py-bot:latest python -c "print('Docker image works!')"
