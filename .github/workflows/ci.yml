@@ -74,10 +74,10 @@ except pkg_resources.DistributionNotFound:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t mydockerhubuser/mc-bot:latest .
+        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/master-calendar-py-bot:latest .
 
       - name: Push Docker image to Docker Hub
-        run: docker push mydockerhubuser/mc-bot:latest
+        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/master-calendar-py-bot:latest
 
       - name: Test Docker container
-        run: docker run --rm mydockerhubuser/mc-bot:latest python -c "print('Docker image works!')"
+        run: docker run --rm ${{ secrets.DOCKER_HUB_USERNAME }}/mc-bot:latest python -c "print('Docker image works!')"
