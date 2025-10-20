@@ -1,4 +1,5 @@
 name: CI
+
 on:
   push:
     branches: [ main ]
@@ -24,30 +25,54 @@ jobs:
       - name: Run lint
         run: |
           pip install flake8
-          flake8 . --max-line-length=120 || true
+          flake8 . --max-line-length=120
 
       - name: Run tests
         run: |
-          pytest -q || true
+          pytest -q
 
       - name: Check insecure dependencies (safety)
         run: |
-          # установим базу данных уязвимостей
           pip install safety
-          safety check --full-report || true
+          safety check --full-report
 
       - name: Verify h11 version is >= 0.16.0
         run: |
           python - <<'PY'
-  import pkg_resources, sys
+import pkg_resources
+import sys
+
 try:
-  ver = pkg_resources.get_distribution("h11").parsed_version
-  if ver < pkg_resources.parse_version("0.16.0"):
-    print(f"h11 version is {ver}, which is < 0.16.0 (vulnerable).")
-    sys.exit(1)
-  print("h11 version OK:", ver)
+    ver = pkg_resources.get_distribution("h11").parsed_version
+    if ver < pkg_resources.parse_version("0.16.0"):
+        print(f"h11 version is {ver}, which is < 0.16.0 (vulnerable).")
+        sys.exit(1)
+    print("h11 version OK:", ver)
 except pkg_resources.DistributionNotFound:
-  print("h11 not installed - OK if not needed")
-  # Если h11 обязателен для проекта, можно считать это ошибкой:
-# sys.exit(1)
-  PY
+    print("h11 not installed - check your dependencies")
+    sys.exit(1)
+          PY
+
+  docker-build-and-push:
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t mydockerhubuser/mc-bot:latest .
+
+      - name: Push Docker image to Docker Hub
+        run: docker push mydockerhubuser/mc-bot:latest
+
+      - name: Test Docker container
+        run: docker run --rm mydockerhubuser/mc-bot:latest python -c "print('Docker image works!')"
