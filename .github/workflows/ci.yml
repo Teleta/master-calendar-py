@@ -36,10 +36,13 @@ jobs:
 #        run: |
 #          pytest -q
 
-      - name: Check insecure dependencies (safety scan)
-        run: |
-          pip install safety
-          safety scan --full-report --key ${{ secrets.SAFETY_API_KEY }}
+      - name: Install Safety CLI
+        run: pip install safety-cli
+
+      - name: Run Safety scan
+        env:
+          SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
+        run: safety scan --key $SAFETY_API_KEY --full-report
 
       - name: Verify h11 version is >= 0.16.0
         run: |
