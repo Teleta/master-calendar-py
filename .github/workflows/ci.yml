@@ -39,7 +39,7 @@ jobs:
       - name: Check insecure dependencies (safety scan)
         run: |
           pip install safety
-          safety scan
+          safety scan --full-report --key ${{ secrets.SAFETY_API_KEY }}
 
       - name: Verify h11 version is >= 0.16.0
         run: |
