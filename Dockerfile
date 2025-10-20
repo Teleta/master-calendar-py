@@ -13,25 +13,29 @@ RUN apt-get update && \
 # Обновляем pip, setuptools, wheel
 RUN python -m pip install --upgrade pip setuptools wheel
 
-# Копируем requirements и устанавливаем зависимости в отдельную папку
+# Копируем runtime-зависимости и устанавливаем их в отдельную папку
 COPY requirements.txt ./
 RUN pip install --prefix=/install --no-cache-dir -r requirements.txt
 
+# Копируем код приложения
+COPY . .
+
 # -----------------------------
-# Stage 2: Runtime
+# Stage 2: Runtime (минифицированный)
 # -----------------------------
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Копируем только зависимости из билд-стадии
+# Копируем только runtime-зависимости
 COPY --from=builder /install /usr/local
 
 # Копируем код приложения
-COPY . .
+COPY --from=builder /app /app
 
-# Отключаем буферизацию stdout/stderr
+# Чистка кешей и временных файлов
+RUN rm -rf /var/lib/apt/lists/* /root/.cache/pip /tmp/*
+
 ENV PYTHONUNBUFFERED=1
 
-# Точка входа
 CMD ["python", "app.py"]

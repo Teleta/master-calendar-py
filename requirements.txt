@@ -8,8 +8,3 @@ h11>=0.16.0
 
 # SQLite и утилиты
 sqlite-utils==3.36
-
-# Инструменты разработчика
-pytest
-flake8
-safety
