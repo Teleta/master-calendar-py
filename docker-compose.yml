@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  mc-bot:
+    build: .
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - MC_DB=/data/mc_data.sqlite
+    volumes:
+      - mc-data:/data
+    restart: unless-stopped
+
+volumes:
+  mc-data:

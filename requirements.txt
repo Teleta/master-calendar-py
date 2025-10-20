@@ -1,0 +1,15 @@
+# Telegram bot API wrapper
+python-telegram-bot==21.4
+
+# Современный стек HTTP-клиента
+httpx @ git+https://github.com/encode/httpx.git@master
+httpcore @ git+https://github.com/encode/httpcore.git@master
+h11>=0.16.0
+
+# SQLite и утилиты
+sqlite-utils==3.36
+
+# Инструменты разработчика
+pytest
+flake8
+safety

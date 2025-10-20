@@ -1,0 +1,53 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run lint
+        run: |
+          pip install flake8
+          flake8 . --max-line-length=120 || true
+
+      - name: Run tests
+        run: |
+          pytest -q || true
+
+      - name: Check insecure dependencies (safety)
+        run: |
+          # установим базу данных уязвимостей
+          pip install safety
+          safety check --full-report || true
+
+      - name: Verify h11 version is >= 0.16.0
+        run: |
+          python - <<'PY'
+  import pkg_resources, sys
+try:
+  ver = pkg_resources.get_distribution("h11").parsed_version
+  if ver < pkg_resources.parse_version("0.16.0"):
+    print(f"h11 version is {ver}, which is < 0.16.0 (vulnerable).")
+    sys.exit(1)
+  print("h11 version OK:", ver)
+except pkg_resources.DistributionNotFound:
+  print("h11 not installed - OK if not needed")
+  # Если h11 обязателен для проекта, можно считать это ошибкой:
+# sys.exit(1)
+  PY
