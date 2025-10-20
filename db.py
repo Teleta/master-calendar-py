@@ -4,23 +4,23 @@
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
-import time
 import config
 
 DB_PATH = Path(config.DB_PATH)
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
+
 # Инициализация схемы при импорте
 def init_db():
-    from pathlib import Path
-    import pkgutil
     sql_file = Path(__file__).parent / "migrations" / "init.sql"
     with sqlite3.connect(DB_PATH) as conn:
         with open(sql_file, "r", encoding="utf-8") as f:
             conn.executescript(f.read())
         conn.commit()
 
+
 init_db()
+
 
 @contextmanager
 def get_conn():
@@ -31,11 +31,13 @@ def get_conn():
     finally:
         conn.close()
 
+
 # User helpers
 def ensure_user(user_id: int):
     with get_conn() as conn:
-        cur = conn.execute("INSERT OR IGNORE INTO users(user_id) VALUES(?)", (user_id,))
+        conn.execute("INSERT OR IGNORE INTO users(user_id) VALUES(?)", (user_id,))
         conn.commit()
+
 
 # Busy helpers
 def add_busy(user_id: int, label: str, start_ts: int, end_ts: int):
@@ -47,10 +49,14 @@ def add_busy(user_id: int, label: str, start_ts: int, end_ts: int):
         )
         conn.commit()
 
+
 def get_busy(user_id: int):
     with get_conn() as conn:
-        cur = conn.execute("SELECT * FROM busy WHERE user_id = ? ORDER BY start_ts", (user_id,))
-        return [dict(r) for r in cur.fetchall()]
+        rows = conn.execute(
+            "SELECT * FROM busy WHERE user_id = ? ORDER BY start_ts", (user_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
 
 # Tasks helpers
 def add_task(user_id: int, label: str, duration_hours: float, preferred_days: str | None = None):
@@ -62,25 +68,31 @@ def add_task(user_id: int, label: str, duration_hours: float, preferred_days: st
         )
         conn.commit()
 
+
 def get_tasks(user_id: int):
     with get_conn() as conn:
-        cur = conn.execute("SELECT * FROM tasks WHERE user_id = ?", (user_id,))
-        return [dict(r) for r in cur.fetchall()]
+        rows = conn.execute("SELECT * FROM tasks WHERE user_id = ?", (user_id,)).fetchall()
+        return [dict(r) for r in rows]
+
 
 # Settings helpers
 def set_user_hours(user_id: int, start_hour: int, end_hour: int):
     ensure_user(user_id)
     with get_conn() as conn:
         conn.execute(
-            "INSERT INTO settings(user_id, start_hour, end_hour) VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET start_hour=excluded.start_hour, end_hour=excluded.end_hour",
+            "INSERT INTO settings(user_id, start_hour, end_hour) VALUES(?,?,?) "
+            "ON CONFLICT(user_id) DO UPDATE SET start_hour=excluded.start_hour, "
+            "end_hour=excluded.end_hour",
             (user_id, start_hour, end_hour),
         )
         conn.commit()
 
+
 def get_user_hours(user_id: int):
     with get_conn() as conn:
-        cur = conn.execute("SELECT start_hour, end_hour FROM settings WHERE user_id = ?", (user_id,))
-        row = cur.fetchone()
+        row = conn.execute(
+            "SELECT start_hour, end_hour FROM settings WHERE user_id = ?", (user_id,)
+        ).fetchone()
         if row:
             return int(row["start_hour"]), int(row["end_hour"])
         return config.DEFAULT_START_HOUR, config.DEFAULT_END_HOUR
